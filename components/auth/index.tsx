@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import SignUp from "./signin";
+import SignUp from "./signup";
 import SignIn from "./signin";
 
 export default function Auth() {
