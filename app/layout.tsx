@@ -1,11 +1,11 @@
-import Footer from "components/footer";
-import Header from "components/header";
 import { ThemeProvider } from "config/material-tailwind-theme-provider";
 import ReactQueryClientProvider from "config/ReactQueryClientProvider";
 import RecoilProvider from "config/RecoilProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import MainLayout from "components/layouts/main-layout";
+import Auth from "components/auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const loggedIn = true;
+
   return (
     <html lang="en">
       <head>
@@ -28,15 +30,7 @@ export default function RootLayout({ children }) {
       </head>
 
       <body className={inter.className}>
-        <RecoilProvider>
-          <ReactQueryClientProvider>
-            <ThemeProvider>
-              <Header />
-              {children}
-              <Footer />
-            </ThemeProvider>
-          </ReactQueryClientProvider>
-        </RecoilProvider>
+        {loggedIn ? <MainLayout>{children}</MainLayout> : <Auth />}
       </body>
     </html>
   );
