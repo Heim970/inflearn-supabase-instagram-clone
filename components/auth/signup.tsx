@@ -38,9 +38,11 @@ export default function SignUp({ setView }) {
         email,
         token: otp,
       });
+
       if (data) {
-        setConfirmationRequired(true);
+        console.log(data);
       }
+
       if (error) {
         alert(error.message);
       }
@@ -82,8 +84,10 @@ export default function SignUp({ setView }) {
         <Button
           onClick={() => {
             if (confirmationRequired) {
+              verifyOtpMutation.mutate();
+            } else {
               signupMutation.mutate();
-            } else signupMutation.mutate();
+            }
           }}
           loading={
             confirmationRequired
