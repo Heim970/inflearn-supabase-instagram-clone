@@ -1,20 +1,72 @@
 "use client";
 
 import { Button, Spinner } from "@material-tailwind/react";
+import Person from "./Person";
+import Message from "./Message";
 import { useRecoilValue } from "recoil";
 import {
   presenceState,
   selectedUserIdState,
   selectedUserIndexState,
 } from "utils/recoil/atoms";
-import Message from "./Message";
-import Person from "./Person";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getAllMessages, getUserById, sendMessage } from "actions/chatActions";
 import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getUserById } from "actions/chatActions";
 import { createBrowserSupabaseClient } from "utils/supabase/client";
 
-export default function ChatScreen() {
+export async function sendMessage({ message, chatUserId }) {
+  const supabase = createBrowserSupabaseClient();
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error || !session.user) {
+    throw new Error("User is not authenticated");
+  }
+
+  const { data, error: sendMessageError } = await supabase
+    .from("message")
+    .insert({
+      message,
+      receiver: chatUserId,
+      sender: session.user.id,
+    });
+
+  if (sendMessageError) {
+    throw new Error(sendMessageError.message);
+  }
+
+  return data;
+}
+
+export async function getAllMessages({ chatUserId }) {
+  const supabase = createBrowserSupabaseClient();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error || !session.user) {
+    throw new Error("User is not authenticated");
+  }
+
+  const { data, error: getMessagesError } = await supabase
+    .from("message")
+    .select("*")
+    .or(`receiver.eq.${chatUserId},receiver.eq.${session.user.id}`)
+    .or(`sender.eq.${chatUserId},sender.eq.${session.user.id}`)
+    .order("created_at", { ascending: true });
+
+  if (getMessagesError) {
+    return [];
+  }
+
+  return data;
+}
+
+export default function ChatScreen({}) {
   const selectedUserId = useRecoilValue(selectedUserIdState);
   const selectedUserIndex = useRecoilValue(selectedUserIndexState);
   const [message, setMessage] = useState("");
@@ -80,7 +132,7 @@ export default function ChatScreen() {
       />
 
       {/* 채팅 영역 */}
-      <div className="w-full flex-1 flex flex-col p-4 gap-3">
+      <div className="w-full overflow-y-scroll flex-1 flex flex-col p-4 gap-3">
         {getAllMessagesQuery.data?.map((message) => (
           <Message
             key={message.id}
